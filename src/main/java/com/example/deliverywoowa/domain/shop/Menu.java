@@ -39,7 +39,7 @@ public class Menu {
 	private Shop shop;
 
 	@OneToMany(cascade = CascadeType.ALL)
-	@JoinColumn
+	@JoinColumn(name = "MENU_ID")
 	private List<OptionGroupSpecification> optionGroupSpecs = new ArrayList<>();
 
 	@Builder
