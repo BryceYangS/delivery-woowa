@@ -61,4 +61,8 @@ public class OptionSpecification {
 	public int hashCode() {
 		return Objects.hash(name, price);
 	}
+
+	public boolean isSatisfiedBy(Option option) {
+		return Objects.equals(name, option.getName()) && Objects.equals(price, option.getPrice());
+	}
 }

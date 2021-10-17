@@ -20,6 +20,7 @@ import javax.persistence.Table;
 import com.example.deliverywoowa.domain.generic.money.Money;
 import com.example.deliverywoowa.domain.shop.Shop;
 
+import lombok.Builder;
 import lombok.Getter;
 
 @Entity
@@ -51,36 +52,42 @@ public class Order {
 	@Column(name = "STATUS")
 	private OrderStatus orderStatus;
 
-	public Order(Long userId, Shop shop, List<OrderLineItem> orderLineItems, LocalDateTime orderedTime,
-		OrderStatus orderStatus) {
+	@Builder
+	public Order(Long userId, Shop shop, List<OrderLineItem> items, LocalDateTime orderedTime,
+		OrderStatus status) {
 		this.userId = userId;
 		this.shop = shop;
 		this.orderedTime = orderedTime;
-		this.orderStatus = orderStatus;
-		this.orderLineItems.addAll(orderLineItems);
+		this.orderStatus = status;
+		this.orderLineItems.addAll(items);
 	}
 
 	protected Order() {
 	}
 
+	// 주문하기
 	public void place(){
 		validate();
 		ordered();
 	}
 
+	// 주문 검증하기
 	private void validate() {
 		if (orderLineItems.isEmpty()) {
 			throw new IllegalStateException("주문 항목이 비어 있습니다.");
 		}
 
+		// 영업여부 확인
 		if (!shop.isOpen()) {
 			throw new IllegalArgumentException("가게가 영업중이 아닙니다.");
 		}
 
+		// 최소주문금액이상 확인
 		if (!shop.isValidOrderAmount(calculateTotalPrice())) {
 			throw new IllegalStateException(String.format("최소 주문 금액 %s 이상을 주문해주세요.", shop.getMinOrderAmount()));
 		}
 
+		// 주문항목 검증
 		for (OrderLineItem orderLineItem : orderLineItems) {
 			orderLineItem.validate();
 		}
@@ -88,6 +95,15 @@ public class Order {
 
 	private void ordered() {
 		this.orderStatus = OrderStatus.ORDERED;
+	}
+
+	public void payed() {
+		this.orderStatus = OrderStatus.PAYED;
+	}
+
+	public void delivered() {
+		this.orderStatus = OrderStatus.DELIVERED;
+		this.shop.billCommissionFee(calculateTotalPrice());
 	}
 
 	private Money calculateTotalPrice() {

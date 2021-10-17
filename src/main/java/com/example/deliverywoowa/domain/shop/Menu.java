@@ -14,6 +14,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import lombok.Builder;
 import lombok.Getter;
 
 @Entity
@@ -39,7 +40,8 @@ public class Menu {
 	@JoinColumn
 	private List<OptionGroupSpecification> optionGroupSpecs = new ArrayList<>();
 
-	public Menu(Long id, String name, String description, Shop shop, OptionGroupSpecification basic, List<OptionGroupSpecification> optionGroupSpecs) {
+	@Builder
+	public Menu(Long id, String name, String description, Shop shop, OptionGroupSpecification basic, List<OptionGroupSpecification> additives) {
 		this.id = id;
 		this.name = name;
 		this.shop = shop;
@@ -47,8 +49,26 @@ public class Menu {
 
 		this.shop.addMenu(this);
 		this.optionGroupSpecs.add(basic);
-		this.optionGroupSpecs.addAll(optionGroupSpecs);
+		this.optionGroupSpecs.addAll(additives);
 	}
 
 	protected Menu(){}
+
+	public void validateOrder(String menuName, List<OptionGroup> optionGroups) {
+		if (!this.name.equals(menuName)) {
+			throw new IllegalArgumentException("기본 상품이 변경됐습니다.");
+		}
+
+		if (!isSatisfiedBy(optionGroups)) {
+			throw new IllegalArgumentException("메뉴가 변경됐습니다.");
+		}
+	}
+
+	private boolean isSatisfiedBy(List<OptionGroup> cartOptionGroups) {
+		return cartOptionGroups.stream().anyMatch(this::isSatisfiedBy);
+	}
+
+	private boolean isSatisfiedBy(OptionGroup group) {
+		return optionGroupSpecs.stream().anyMatch(spec -> spec.isSatisfiedBy(group));
+	}
 }
