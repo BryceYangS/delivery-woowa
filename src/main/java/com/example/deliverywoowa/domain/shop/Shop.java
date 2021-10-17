@@ -79,4 +79,20 @@ public class Shop {
 	public boolean isValidOrderAmount(Money amount) {
 		return amount.isGreaterThanOrEqual(minOrderAmount);
 	}
+
+	public void open() {
+		this.open = true;
+	}
+
+	public void close() {
+		this.open = false;
+	}
+
+	public void modifyCommissionRate(Ratio commissionRate) {
+		this.commissionRate = commissionRate;
+	}
+
+	public void billCommissionFee(Money price) {
+		commission = commission.plus(commissionRate.of(price));
+	}
 }
