@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,7 +11,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -32,9 +30,8 @@ public class OrderLineItem {
 	@Column(name = "ORDER_LINE_ITEM_ID")
 	private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "MENU_ID")
-	private Menu menu;
+	@Column(name = "MENU_ID")
+	private Long menuId;
 
 	@Column(name = "FOOD_NAME")
 	private String name;
@@ -51,9 +48,9 @@ public class OrderLineItem {
 	}
 
 	@Builder
-	public OrderLineItem(Long id, Menu menu, String name, int count, List<OrderOptionGroup> groups) {
+	public OrderLineItem(Long id, Long menuId, String name, int count, List<OrderOptionGroup> groups) {
 		this.id = id;
-		this.menu = menu;
+		this.menuId = menuId;
 		this.name = name;
 		this.count = count;
 		this.groups.addAll(groups);
@@ -63,10 +60,6 @@ public class OrderLineItem {
 
 	public Money calculatePrice() {
 		return Money.sum(groups, OrderOptionGroup::calculatePrice).times(count);
-	}
-
-	public void validate() {
-		menu.validateOrder(name, convertToOptionGroups());
 	}
 
 	private List<OptionGroup> convertToOptionGroups() {

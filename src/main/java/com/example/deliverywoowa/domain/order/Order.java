@@ -1,8 +1,11 @@
 package com.example.deliverywoowa.domain.order;
 
+import static java.util.stream.Collectors.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -13,7 +16,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -27,6 +29,7 @@ import lombok.Getter;
 @Table(name = "ORDERS")
 @Getter
 public class Order {
+
 	public enum OrderStatus { ORDERED, PAYED, DELIVERED }
 
 	@Id
@@ -37,9 +40,8 @@ public class Order {
 	@Column(name = "USER_ID")
 	private Long userId;
 
-	@ManyToOne
-	@JoinColumn(name = "SHOP_ID")
-	private Shop shop;
+	@Column(name = "SHOP_ID")
+	private Long shopId;
 
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "ORDER_ID")
@@ -52,15 +54,15 @@ public class Order {
 	@Column(name = "STATUS")
 	private OrderStatus orderStatus;
 
-	public Order(Long userId, Shop shop, List<OrderLineItem> items) {
-		this(userId, shop, items, LocalDateTime.now(), null);
+	public Order(Long userId, Long shopId, List<OrderLineItem> items) {
+		this(userId, shopId, items, LocalDateTime.now(), null);
 	}
 
 	@Builder
-	public Order(Long userId, Shop shop, List<OrderLineItem> items, LocalDateTime orderedTime,
+	public Order(Long userId, Long shopId, List<OrderLineItem> items, LocalDateTime orderedTime,
 		OrderStatus status) {
 		this.userId = userId;
-		this.shop = shop;
+		this.shopId = shopId;
 		this.orderedTime = orderedTime;
 		this.orderStatus = status;
 		this.orderLineItems.addAll(items);
@@ -70,31 +72,9 @@ public class Order {
 	}
 
 	// 주문하기
-	public void place(){
-		validate();
+	public void place(OrderValidator orderValidator){
+		orderValidator.validate(this);
 		ordered();
-	}
-
-	// 주문 검증하기
-	private void validate() {
-		if (orderLineItems.isEmpty()) {
-			throw new IllegalStateException("주문 항목이 비어 있습니다.");
-		}
-
-		// 영업여부 확인
-		if (!shop.isOpen()) {
-			throw new IllegalArgumentException("가게가 영업중이 아닙니다.");
-		}
-
-		// 최소주문금액이상 확인
-		if (!shop.isValidOrderAmount(calculateTotalPrice())) {
-			throw new IllegalStateException(String.format("최소 주문 금액 %s 이상을 주문해주세요.", shop.getMinOrderAmount()));
-		}
-
-		// 주문항목 검증
-		for (OrderLineItem orderLineItem : orderLineItems) {
-			orderLineItem.validate();
-		}
 	}
 
 	private void ordered() {
@@ -107,11 +87,13 @@ public class Order {
 
 	public void delivered() {
 		this.orderStatus = OrderStatus.DELIVERED;
-		this.shop.billCommissionFee(calculateTotalPrice());
 	}
 
-	private Money calculateTotalPrice() {
+	Money calculateTotalPrice() {
 		return Money.sum(orderLineItems, OrderLineItem::calculatePrice);
 	}
 
+	public List<Long> getMenuIds() {
+		return orderLineItems.stream().map(OrderLineItem::getMenuId).collect(toList());
+	}
 }

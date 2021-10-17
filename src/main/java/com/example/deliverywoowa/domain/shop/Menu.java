@@ -34,19 +34,18 @@ public class Menu {
 	@Column(name = "FOOD_DESCRIPTION")
 	private String description;
 
-	@OneToOne
-	@JoinColumn(name = "MENU_ID")
-	private Shop shop;
+	@Column(name = "SHOP_ID")
+	private Long shopId;
 
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn
 	private List<OptionGroupSpecification> optionGroupSpecs = new ArrayList<>();
 
 	@Builder
-	public Menu(Long id, String name, String description, Shop shop, OptionGroupSpecification basic, List<OptionGroupSpecification> additives) {
+	public Menu(Long id, String name, String description, Long shopId, OptionGroupSpecification basic, List<OptionGroupSpecification> additives) {
 		this.id = id;
 		this.name = name;
-		this.shop = shop;
+		this.shopId = shopId;
 		this.description = description;
 
 		this.shop.addMenu(this);
@@ -57,13 +56,6 @@ public class Menu {
 	protected Menu(){}
 
 	public void validateOrder(String menuName, List<OptionGroup> optionGroups) {
-		if (!this.name.equals(menuName)) {
-			throw new IllegalArgumentException("기본 상품이 변경됐습니다.");
-		}
-
-		if (!isSatisfiedBy(optionGroups)) {
-			throw new IllegalArgumentException("메뉴가 변경됐습니다.");
-		}
 	}
 
 	private boolean isSatisfiedBy(List<OptionGroup> cartOptionGroups) {
