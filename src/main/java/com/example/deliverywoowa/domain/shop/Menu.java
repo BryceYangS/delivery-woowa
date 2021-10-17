@@ -14,6 +14,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import com.example.deliverywoowa.domain.generic.money.Money;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -70,5 +72,17 @@ public class Menu {
 
 	private boolean isSatisfiedBy(OptionGroup group) {
 		return optionGroupSpecs.stream().anyMatch(spec -> spec.isSatisfiedBy(group));
+	}
+
+	public Money getBasePrice() {
+		return getBasicOptionGroupSpecs().getOptionSpecs().get(0).getPrice();
+	}
+
+	private OptionGroupSpecification getBasicOptionGroupSpecs() {
+		return optionGroupSpecs
+			.stream()
+			.filter(OptionGroupSpecification::isBasic)
+			.findFirst()
+			.orElseThrow(IllegalArgumentException::new);
 	}
 }

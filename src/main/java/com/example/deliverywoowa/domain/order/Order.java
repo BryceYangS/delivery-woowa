@@ -52,6 +52,10 @@ public class Order {
 	@Column(name = "STATUS")
 	private OrderStatus orderStatus;
 
+	public Order(Long userId, Shop shop, List<OrderLineItem> items) {
+		this(userId, shop, items, LocalDateTime.now(), null);
+	}
+
 	@Builder
 	public Order(Long userId, Shop shop, List<OrderLineItem> items, LocalDateTime orderedTime,
 		OrderStatus status) {
